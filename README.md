@@ -6,7 +6,7 @@ database format?
 The [How to Code - Systematic Program
 Design](https://www.edx.org/xseries/how-code-systematic-program-design)
 course has shown me that if you design your data well, it's easy to
-write good clean code.  "Good" meaning code that is well structured, and
+write good clean code.  "Good" meaning code that is well structured and
 easy to understand.  Even better, well designed data can guide you to be
 more effective at actually writing complicated algorithms.
 
@@ -19,7 +19,7 @@ No such luck!  Turns out their data structure was put together
 more or less by accident.  It consists of a single mathematically
 derived number to represent the X,Y,Z coordinates of a given block, and
 a binary blob that serializes whatever information there is to know
-about that block.  Neither of the representations are readily
+about that block.  Neither of these representations is readily
 comprehensible by humans.
 
 This project will attempt to decode databases in the existing Minetest
