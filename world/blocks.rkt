@@ -79,6 +79,20 @@
        (point-y p)   ; y coordinate
        (point-z p))) ; z coordinate
 
+;; ListOfPoint is one of
+;; - empty
+;; - (cons Point ListOfPoint)
+
+(define LOP-0 empty)
+(define LOP-1 (cons (list 0 0 0) (cons (list 500 13 105) empty)))
+
+#;
+(define (fn-for-lop lop)
+  (cond [(empty? lop) (...)]
+        [else
+         (... (fn-for-point (first lop))
+              (fn-for-lop (rest lop)))]))
+
 ;; # Minetest-Block is (minetest-block pos data)
 
 ;; Interpretation:  This duplicates a single block entry from a Minetest
