@@ -1,6 +1,7 @@
 #lang racket
 (require test-engine/racket-tests)
-(provide pos-to-point point-to-pos)
+(provide pos->point point->pos (struct-out minetest-block)
+         point-x point-y point-z)
 
 ;; #### Constants ####
 
@@ -131,17 +132,17 @@
 ;; which is the whole reason I'm writing a way to convert it in the first
 ;; place.
 
-(check-expect (pos-to-point -16756737 empty) (list -1 5 -1))
-(check-expect (pos-to-point -16752641 empty) (list -1 6 -1))
-(check-expect (pos-to-point 20479 empty) (list -1 5 0))
+(check-expect (pos->point -16756737 empty) (list -1 5 -1))
+(check-expect (pos->point -16752641 empty) (list -1 6 -1))
+(check-expect (pos->point 20479 empty) (list -1 5 0))
 
-(define (pos-to-point pos build-point)
+(define (pos->point pos build-point)
   (cond [(not (number? pos)) (error "position must be a number")]
         [(> (length build-point) 3) (error "build-point too long")]
         [(= (length build-point) 3) (reverse build-point)]
         [else
          (let* ([coordinate (pos-to-coordinate pos)])
-           (append (pos-to-point (splice-pos coordinate pos)
+           (append (pos->point (splice-pos coordinate pos)
                                  (cons coordinate build-point))))]))
 
 
@@ -194,16 +195,16 @@
 (check-expect (splice-pos 5 0) 0)
 
 (define (splice-pos coordinate pos)
-  (round (/ (- pos coordinate) POS_MODULO)))
+  (ceiling (/ (- pos coordinate) POS_MODULO)))
 
 ;; Point -> Pos
 ;; Convert a Point into a Minetest block Pos
 
-(check-expect (point-to-pos (list -1 5 -1)) -16756737)
-(check-expect (point-to-pos (list -1 6 -1)) -16752641)
-(check-expect (point-to-pos (list -1 5 0)) 20479)
+(check-expect (point->pos (list -1 5 -1)) -16756737)
+(check-expect (point->pos (list -1 6 -1)) -16752641)
+(check-expect (point->pos (list -1 5 0)) 20479)
 
-(define (point-to-pos point)
+(define (point->pos point)
   (int64 (+ (point-x point)
             (* (point-y point) POS_MODULO)
             (* (point-z point) POS_BIGINT))))
