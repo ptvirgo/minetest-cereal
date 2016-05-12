@@ -217,5 +217,3 @@
   (cond [(and (<= u (expt 2 63)) (>= u (* -1 (expt 2 63)))) u]
         [(>= u (expt 2 63)) (int64 (- u (expt 2 63)))]
         [else (int64 (+ u (expt 2 63)))]))
-
-(test)
