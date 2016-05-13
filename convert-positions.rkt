@@ -31,7 +31,7 @@
 
 (define (get-blocks wdb start count)
   (rows->blocks (query-rows wdb
-                            "select pos, data from blocks where pos >= $1 limit $2"
+                            "select pos, data from blocks where pos > $1 limit $2"
                             start count)))
 
 ;; Database rows -> ListOfBlocks
@@ -88,15 +88,32 @@
       #f
       #t))
 
-;; Database Database Statement Pos -> Integer
-;; Migrate records from the Minetest world to the Legible database,
-;; using the prepared statement.
-;; Returns last block inserted.
+;; Database Boolean -> Boolean
+;; Returns true.  As a side effect, starts a transaction if the supplied
+;; boolean is false.  Creating side effects in a functional language is odd,
+;; but the idea is "necessary? true" -> starts a transaction, "necessary? false"
+;; does not.
 
-(define (migrate-batch mtw ldb insert start)
-  (cond [(>= start (max-pos mtw)) start]
+(define (start-transaction-if-necessary c necessary?)
+  (cond [necessary? (start-transaction c) #t]
+        [else #t]))
+
+;; Database Database Statement Pos Boolean -> Integer
+;; Migrate records from the Minetest world to the Legible database,
+;; using the prepared statement. Returns last block inserted.
+;; Transaction boolean should indicate whether or not the batch is already
+;; contained within a transaction.  A new transaction will be initiated
+;; if it is not.
+
+(define (migrate-batch mtw ldb insert start transaction)
+  (cond [(>= start (max-pos mtw)) (commit-transaction ldb) start]
         [else
-         (migrate-batch mtw ldb insert (migrate-blocks (get-blocks mtw start BATCH-SIZE) ldb insert))]))
+         (migrate-batch
+          mtw
+          ldb
+          insert
+          (migrate-blocks (get-blocks mtw start BATCH-SIZE) ldb insert)
+          (start-transaction-if-necessary ldb (not transaction)))]))
 
 ;; ListOfBlock Database Insert -> Pos
 ;; Insert a provided list of blocks into the new legible database.  Return the Pos
@@ -124,7 +141,7 @@
                             " z:" (number->string z)
                             " pos:" (number->string (minetest-block-pos block)))])
     (cond [ok (query-exec ldb insert x y z data)]
-          [else (display (string-append "Duplicate " id ": ignoring\n"))])
+          [else (display (string-append "Duplicate " id ": skipping\n"))])
     (minetest-block-pos block)))
 
 
@@ -144,5 +161,5 @@
           (let* ([ldb (new-legible-db output)]
                  [mtw (open-minetest-world world)]
                  [insert (prepare-legible-insert ldb)]
-                 [start (min-pos mtw)])
-            (migrate-batch mtw ldb insert start))])))
+                 [start (- (min-pos mtw) 1)])
+            (migrate-batch mtw ldb insert start (start-transaction-if-necessary ldb #t)))])))
