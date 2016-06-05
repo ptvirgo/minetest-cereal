@@ -1,472 +1,86 @@
-#reader(lib"read.ss""wxme")WXME0108 ## 
+#lang racket
+(require test-engine/racket-tests)
+(provide read-U16 read-U32)
+
 #|
-   This file uses the GRacket editor format.
-   Open this file in DrRacket version 6.1 or later to read it.
+The Minetest World format stores block data as a byte stream.  The byte
+stream uses different bit length encodings and different meanings throughout.
 
-   Most likely, it was created by saving a program in DrRacket,
-   and it probably contains a program with non-text elements
-   (such as images or comment boxes).
+Borrowing from the minetestmapper.py, this library attempts to translate
+the byte stream into something humane.
 
-            http://racket-lang.org/
+See also: https://en.wikipedia.org/wiki/Integer_%28computer_science%29
 |#
- 31 7 #"wxtext\0"
-3 1 6 #"wxtab\0"
-1 1 8 #"wximage\0"
-2 0 8 #"wxmedia\0"
-4 1 34 #"(lib \"syntax-browser.ss\" \"mrlib\")\0"
-1 0 16 #"drscheme:number\0"
-3 0 44 #"(lib \"number-snip.ss\" \"drscheme\" \"private\")\0"
-1 0 36 #"(lib \"comment-snip.ss\" \"framework\")\0"
-1 0 93
-(
- #"((lib \"collapsed-snipclass.ss\" \"framework\") (lib \"collapsed-sni"
- #"pclass-wxme.ss\" \"framework\"))\0"
-) 0 0 43 #"(lib \"collapsed-snipclass.ss\" \"framework\")\0"
-0 0 19 #"drscheme:sexp-snip\0"
-0 0 36 #"(lib \"cache-image-snip.ss\" \"mrlib\")\0"
-1 0 68
-(
- #"((lib \"image-core.ss\" \"mrlib\") (lib \"image-core-wxme.rkt\" \"mr"
- #"lib\"))\0"
-) 1 0 29 #"drscheme:bindings-snipclass%\0"
-1 0 88
-(
- #"((lib \"pict-snip.rkt\" \"drracket\" \"private\") (lib \"pict-snip.r"
- #"kt\" \"drracket\" \"private\"))\0"
-) 0 0 34 #"(lib \"bullet-snip.rkt\" \"browser\")\0"
-0 0 25 #"(lib \"matrix.ss\" \"htdp\")\0"
-1 0 22 #"drscheme:lambda-snip%\0"
-1 0 29 #"drclickable-string-snipclass\0"
-0 0 26 #"drracket:spacer-snipclass\0"
-0 0 57
-#"(lib \"hrule-snip.rkt\" \"macro-debugger\" \"syntax-browser\")\0"
-1 0 26 #"drscheme:pict-value-snip%\0"
-0 0 45 #"(lib \"image-snipr.ss\" \"slideshow\" \"private\")\0"
-1 0 38 #"(lib \"pict-snipclass.ss\" \"slideshow\")\0"
-2 0 55 #"(lib \"vertical-separator-snip.ss\" \"stepper\" \"private\")\0"
-1 0 18 #"drscheme:xml-snip\0"
-1 0 31 #"(lib \"xml-snipclass.ss\" \"xml\")\0"
-1 0 21 #"drscheme:scheme-snip\0"
-2 0 34 #"(lib \"scheme-snipclass.ss\" \"xml\")\0"
-1 0 10 #"text-box%\0"
-1 0 32 #"(lib \"text-snipclass.ss\" \"xml\")\0"
-1 0 1 6 #"wxloc\0"
-          0 0 84 0 1 #"\0"
-0 75 1 #"\0"
-0 12 90 -1 90 -1 3 -1 0 1 0 1 0 0 0 0 0 0 0 0 0 0 0 255 255 255 1 -1 0 9
-#"Standard\0"
-0 75 10 #"Monospace\0"
-0 11 90 -1 90 -1 3 -1 0 1 0 1 0 0 0 0 0 0 0 0 0 0 0 255 255 255 1 -1 2 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 1 1 1 1 1 1 0 0 0 0 0 0 -1 -1 2 24
-#"framework:default-color\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 255 255 255 -1 -1 2
-1 #"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 0 0 0 1 1 1 150 0 150 0 0 0 -1 -1 2 15
-#"text:ports out\0"
-0 -1 1 #"\0"
-1 0 -1 92 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 150 0 150 0 0 0 -1 -1 2 1
-#"\0"
-0 -1 1 #"\0"
-1.0 0 -1 -1 93 -1 -1 -1 0 0 0 0 0 0 0 0 0 1.0 1.0 1.0 255 0 0 0 0 0 -1
--1 2 15 #"text:ports err\0"
-0 -1 1 #"\0"
-1 0 -1 92 93 -1 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 255 0 0 0 0 0 -1 -1 2 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 0 0 0 1 1 1 0 0 175 0 0 0 -1 -1 2 17
-#"text:ports value\0"
-0 -1 1 #"\0"
-1 0 -1 92 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 0 0 175 0 0 0 -1 -1 2 1
-#"\0"
-0 -1 1 #"\0"
-1.0 0 92 -1 -1 -1 -1 -1 0 0 0 0 0 0 0 0 0 1.0 1.0 1.0 34 139 34 0 0 0 -1
--1 2 27 #"Matching Parenthesis Style\0"
-0 -1 1 #"\0"
-1.0 0 92 -1 -1 -1 -1 -1 0 0 0 0 0 0 0 0 0 1.0 1.0 1.0 34 139 34 0 0 0 -1
--1 2 1 #"\0"
-0 -1 1 #"\0"
-1 0 -1 92 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 38 38 128 0 0 0 -1 -1 2 37
-#"framework:syntax-color:scheme:symbol\0"
-0 -1 1 #"\0"
-1 0 -1 92 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 38 38 128 0 0 0 -1 -1 2 38
-#"framework:syntax-color:scheme:keyword\0"
-0 -1 1 #"\0"
-1 0 -1 92 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 38 38 128 0 0 0 -1 -1 2 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 92 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 194 116 31 0 0 0 -1 -1 2
-38 #"framework:syntax-color:scheme:comment\0"
-0 -1 1 #"\0"
-1 0 -1 92 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 194 116 31 0 0 0 -1 -1 2 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 92 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 41 128 38 0 0 0 -1 -1 2 37
-#"framework:syntax-color:scheme:string\0"
-0 -1 1 #"\0"
-1 0 -1 92 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 41 128 38 0 0 0 -1 -1 2 35
-#"framework:syntax-color:scheme:text\0"
-0 -1 1 #"\0"
-1 0 -1 92 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 41 128 38 0 0 0 -1 -1 2 39
-#"framework:syntax-color:scheme:constant\0"
-0 -1 1 #"\0"
-1 0 -1 92 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 41 128 38 0 0 0 -1 -1 2 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 92 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 132 60 36 0 0 0 -1 -1 2 49
-#"framework:syntax-color:scheme:hash-colon-keyword\0"
-0 -1 1 #"\0"
-1 0 -1 92 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 132 60 36 0 0 0 -1 -1 2 42
-#"framework:syntax-color:scheme:parenthesis\0"
-0 -1 1 #"\0"
-1 0 -1 92 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 132 60 36 0 0 0 -1 -1 2 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 92 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 255 0 0 0 0 0 -1 -1 2 36
-#"framework:syntax-color:scheme:error\0"
-0 -1 1 #"\0"
-1 0 -1 92 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 255 0 0 0 0 0 -1 -1 2 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 92 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 0 0 0 0 0 0 -1 -1 2 36
-#"framework:syntax-color:scheme:other\0"
-0 -1 1 #"\0"
-1 0 -1 92 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 0 0 0 0 0 0 -1 -1 2 16
-#"Misspelled Text\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 0 0 0 1 1 1 0 0 0 0 0 0 -1 -1 2 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 92 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 81 112 203 0 0 0 -1 -1 2
-38 #"drracket:check-syntax:lexically-bound\0"
-0 -1 1 #"\0"
-1 0 -1 92 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 81 112 203 0 0 0 -1 -1 2 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 92 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 178 34 34 0 0 0 -1 -1 2 28
-#"drracket:check-syntax:set!d\0"
-0 -1 1 #"\0"
-1 0 -1 92 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 178 34 34 0 0 0 -1 -1 2 37
-#"drracket:check-syntax:unused-require\0"
-0 -1 1 #"\0"
-1 0 -1 92 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 255 0 0 0 0 0 -1 -1 2 36
-#"drracket:check-syntax:free-variable\0"
-0 -1 1 #"\0"
-1 0 -1 92 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 255 0 0 0 0 0 -1 -1 2 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 92 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 68 0 203 0 0 0 -1 -1 2 31
-#"drracket:check-syntax:imported\0"
-0 -1 1 #"\0"
-1 0 -1 92 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 68 0 203 0 0 0 -1 -1 2 47
-#"drracket:check-syntax:my-obligation-style-pref\0"
-0 -1 1 #"\0"
-1 0 -1 92 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 178 34 34 0 0 0 -1 -1 2 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 92 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 0 116 0 0 0 0 -1 -1 2 50
-#"drracket:check-syntax:their-obligation-style-pref\0"
-0 -1 1 #"\0"
-1 0 -1 92 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 0 116 0 0 0 0 -1 -1 2 48
-#"drracket:check-syntax:unk-obligation-style-pref\0"
-0 -1 1 #"\0"
-1 0 -1 92 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 0 0 0 0 0 0 -1 -1 2 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 92 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 139 142 28 0 0 0 -1 -1 2
-49 #"drracket:check-syntax:both-obligation-style-pref\0"
-0 -1 1 #"\0"
-1 0 -1 92 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 139 142 28 0 0 0 -1 -1 2
-26 #"plt:htdp:test-coverage-on\0"
-0 -1 1 #"\0"
-1 0 -1 92 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 0 0 0 0 0 0 -1 -1 2 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 92 -1 93 -1 -1 0 1 0 0 0 1 0 0 0 0 0 0 255 165 0 0 0 0 -1 -1 2 27
-#"plt:htdp:test-coverage-off\0"
-0 -1 1 #"\0"
-1 0 -1 92 -1 93 -1 -1 0 1 0 0 0 1 0 0 0 0 0 0 255 165 0 0 0 0 -1 -1 4 1
-#"\0"
-0 70 1 #"\0"
-1.0 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 1.0 1.0 1.0 1.0 1.0 1.0 0 0 0 0 0 0
--1 -1 4 4 #"XML\0"
-0 70 1 #"\0"
-1.0 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 1.0 1.0 1.0 1.0 1.0 1.0 0 0 0 0 0 0
--1 -1 2 37 #"plt:module-language:test-coverage-on\0"
-0 -1 1 #"\0"
-1 0 -1 92 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 0 0 0 0 0 0 -1 -1 2 38
-#"plt:module-language:test-coverage-off\0"
-0 -1 1 #"\0"
-1 0 -1 92 -1 93 -1 -1 0 1 0 0 0 1 0 0 0 0 0 0 255 165 0 0 0 0 -1 -1 4 1
-#"\0"
-0 71 1 #"\0"
-1.0 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 1.0 1.0 1.0 1.0 1.0 1.0 0 0 0 0 0 0
--1 -1 4 1 #"\0"
-0 -1 1 #"\0"
-1.0 0 -1 -1 -1 -1 -1 -1 1 0 0 0 0 0 0 0 0 1.0 1.0 1.0 0 0 255 0 0 0 -1
--1 4 1 #"\0"
-0 71 1 #"\0"
-1.0 0 -1 -1 -1 -1 -1 -1 1 0 0 0 0 0 0 0 0 1.0 1.0 1.0 0 0 255 0 0 0 -1
--1 4 1 #"\0"
-0 71 1 #"\0"
-1.0 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 0 0 0 1.0 1.0 1.0 0 100 0 0 0 0 -1
--1 2 1 #"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 0 0 0 1 1 1 200 0 0 0 0 0 -1 -1 0 1
-#"\0"
-0 75 10 #"Monospace\0"
-0.0 11 90 -1 90 -1 3 -1 0 1 0 1 0 0 0.0 0.0 0.0 0.0 0.0 0.0 0 0 0 255
-255 255 1 -1 2 1 #"\0"
-0 -1 1 #"\0"
-1.0 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 1 0.0 0.0 0.0 0.0 0.0 0.0 0 0 0 255
-255 255 -1 -1 2 1 #"\0"
-0 -1 1 #"\0"
-1.0 0 -1 92 -1 93 -1 -1 0 1 0 0 0 0 0.0 0.0 0.0 1.0 1.0 1.0 150 0 150 0
-0 0 -1 -1 2 1 #"\0"
-0 -1 1 #"\0"
-1.0 0 -1 92 93 -1 -1 -1 0 1 0 0 0 0 0.0 0.0 0.0 1.0 1.0 1.0 255 0 0 0 0
-0 -1 -1 2 1 #"\0"
-0 -1 1 #"\0"
-1.0 0 -1 92 -1 93 -1 -1 0 1 0 0 0 0 0.0 0.0 0.0 1.0 1.0 1.0 0 0 175 0 0
-0 -1 -1 2 1 #"\0"
-0 -1 1 #"\0"
-1.0 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 0.0 0.0 0.0 1.0 1.0 1.0 0 0 0 0 0 0
--1 -1 4 32 #"widget.rkt::browser-text% basic\0"
-0 70 1 #"\0"
-1.0 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 1.0 1.0 1.0 1.0 1.0 1.0 0 0 0 0 0 0
--1 -1 4 59
-#"macro-debugger/syntax-browser/properties color-text% basic\0"
-0 70 1 #"\0"
-1.0 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 1.0 1.0 1.0 1.0 1.0 1.0 0 0 0 0 0 0
--1 -1 63 1 #"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 0 0 0 1 1 1 190 190 190 0 0 0 -1 -1 4
-1 #"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 0 0 0 1 1 1 0 0 0 0 0 0 -1 -1 4 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 0 0 0 1 1 1 255 0 0 0 0 0 -1 -1 4 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 0 0 0 1 1 1 0 0 255 0 0 0 -1 -1 4 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 0 0 0 1 1 1 107 142 35 0 0 0 -1 -1 4 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 0 0 0 1 1 1 0 100 0 0 0 0 -1 -1 4 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 0 0 0 1 1 1 139 0 0 0 0 0 -1 -1 4 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 0 0 0 1 1 1 100 149 237 0 0 0 -1 -1 4
-1 #"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 0 0 0 1 1 1 65 105 225 0 0 0 -1 -1 4 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 0 0 0 1 1 1 70 130 180 0 0 0 -1 -1 4 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 0 0 0 1 1 1 47 79 79 0 0 0 -1 -1 4 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 0 0 0 1 1 1 0 0 139 0 0 0 -1 -1 4 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 0 0 0 1 1 1 75 0 130 0 0 0 -1 -1 4 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 0 0 0 1 1 1 160 32 240 0 0 0 -1 -1 4 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 0 0 0 1 1 1 255 165 0 0 0 0 -1 -1 4 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 0 0 0 1 1 1 250 128 114 0 0 0 -1 -1 4
-1 #"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 0 0 0 1 1 1 184 134 11 0 0 0 -1 -1 4 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 0 0 0 1 1 1 128 128 0 0 0 0 -1 -1 4 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 0 0 0 1 1 1 169 169 169 0 0 0 -1 -1 4
-1 #"\0"
-0 -1 1 #"\0"
-1.0 0 -1 -1 -1 -1 -1 -1 1 0 0 0 0 0 0 0 0 1.0 1.0 1.0 0 0 0 0 0 0 -1 -1
-          0 82 0 28 3 12 #"#lang racket"
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 14 3 7 #"provide"
-0 0 24 3 1 #" "
-0 0 14 3 8 #"read-U16"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 7         481 4           0 0           0 79 0 24 3 1 #" "
-0 0 14 3 3 #"The"
-0 0 24 3 1 #" "
-0 0 14 3 8 #"Minetest"
-0 0 24 3 1 #" "
-0 0 14 3 5 #"World"
-0 0 24 3 1 #" "
-0 0 14 3 6 #"format"
-0 0 24 3 1 #" "
-0 0 14 3 6 #"stores"
-0 0 24 3 1 #" "
-0 0 14 3 5 #"block"
-0 0 24 3 1 #" "
-0 0 14 3 4 #"data"
-0 0 24 3 1 #" "
-0 0 14 3 2 #"as"
-0 0 24 3 1 #" "
-0 0 14 3 1 #"a"
-0 0 24 3 1 #" "
-0 0 14 3 4 #"byte"
-0 0 24 3 1 #" "
-0 0 14 3 7 #"stream."
-0 0 24 3 2 #"  "
-0 0 14 3 3 #"The"
-0 0 24 3 1 #" "
-0 0 14 3 4 #"byte"
-0 0 24 29 1 #"\n"
-0 0 14 3 6 #"stream"
-0 0 24 3 1 #" "
-0 0 14 3 4 #"uses"
-0 0 24 3 1 #" "
-0 0 14 3 9 #"different"
-0 0 24 3 1 #" "
-0 0 14 3 9 #"encodings"
-0 0 24 3 1 #" "
-0 0 14 3 2 #"at"
-0 0 24 3 1 #" "
-0 0 14 3 9 #"different"
-0 0 24 3 1 #" "
-0 0 14 3 6 #"points"
-0 0 28 3 1 #","
-0 0 24 3 1 #" "
-0 0 14 3 5 #"which"
-0 0 24 3 1 #" "
-0 0 14 3 3 #"are"
-0 0 24 3 1 #" "
-0 0 14 3 9 #"variable."
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 14 3 9 #"Borrowing"
-0 0 24 3 1 #" "
-0 0 14 3 4 #"from"
-0 0 24 3 1 #" "
-0 0 14 3 3 #"the"
-0 0 24 3 1 #" "
-0 0 14 3 17 #"minetestmapper.py"
-0 0 28 3 1 #","
-0 0 24 3 1 #" "
-0 0 14 3 4 #"this"
-0 0 24 3 1 #" "
-0 0 14 3 7 #"library"
-0 0 24 3 1 #" "
-0 0 14 3 8 #"attempts"
-0 0 24 3 1 #" "
-0 0 14 3 2 #"to"
-0 0 24 3 1 #" "
-0 0 14 3 9 #"translate"
-0 0 24 29 1 #"\n"
-0 0 14 3 3 #"the"
-0 0 24 3 1 #" "
-0 0 14 3 4 #"byte"
-0 0 24 3 1 #" "
-0 0 14 3 6 #"stream"
-0 0 24 3 1 #" "
-0 0 14 3 4 #"into"
-0 0 24 3 1 #" "
-0 0 14 3 9 #"something"
-0 0 24 3 1 #" "
-0 0 14 3 7 #"humane."
-0           0 0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 40 #";; U16 is Integer (UTF-16 character) (?)"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 75
-(
- #";; A standard byte is eight bits representing an integer between 0 a"
- #"nd 255."
-) 0 0 24 29 1 #"\n"
-0 0 17 3 63
-#";; Near as I can tell, the U16 referenced in the Minetest world"
-0 0 24 29 1 #"\n"
-0 0 17 3 74
-(
- #";; documentation is a UTF-16 conversion of UTF-8 encoded bytes in th"
- #"e data"
-) 0 0 24 29 1 #"\n"
-0 0 17 3 15 #";; byte stream."
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 32 #";; minetestmapper.py source was:"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 18 #";; def readU16(f):"
-0 0 24 29 1 #"\n"
-0 0 17 3 6 #";;    "
-0 0 17 3 6 #"return"
-0 0 17 3 1 #" "
-0 0 17 3 3 #"ord"
-0 0 17 3 1 #"("
-0 0 17 3 6 #"f.read"
-0 0 17 3 1 #"("
-0 0 17 3 1 #"1"
-0 0 17 3 2 #"))"
-0 0 17 3 4 #"*256"
-0 0 17 3 1 #" "
-0 0 17 3 1 #"+"
-0 0 17 3 1 #" "
-0 0 17 3 3 #"ord"
-0 0 17 3 1 #"("
-0 0 17 3 6 #"f.read"
-0 0 17 3 4 #"(1))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 14 #";; InputStream"
-0 0 17 3 3 #" ->"
-0 0 17 3 4 #" U16"
-0 0 24 29 1 #"\n"
-0 0 17 3 67
-#";; Accept an input stream as bytes, read out a U16, as based on the"
-0 0 24 29 1 #"\n"
-0 0 17 3 30 #";; minetest mapper source code"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 6 #"define"
-0 0 24 3 2 #" ("
-0 0 14 3 8 #"read-U16"
-0 0 24 3 1 #" "
-0 0 14 3 6 #"stream"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 3 #"  ("
-0 0 14 3 1 #"+"
-0 0 24 3 2 #" ("
-0 0 14 3 1 #"*"
-0 0 24 3 1 #" "
-0 0 21 3 3 #"256"
-0 0 24 3 2 #" ("
-0 0 14 3 9 #"read-byte"
-0 0 24 3 1 #" "
-0 0 14 3 6 #"stream"
-0 0 24 3 4 #")) ("
-0 0 14 3 9 #"read-byte"
-0 0 24 3 1 #" "
-0 0 14 3 6 #"stream"
-0 0 24 3 3 #")))"
-0           0
+
+;; Data Definitions
+
+;; U8 is Integer [0 - 255]
+;; The Minetest code refers to a single byte as a "U8."  It's a standard
+;; 8-bit byte, used as an unsigned (positive) integer [0 - 255].  We don't
+;; alter Racket's representation of Integers here.
+
+(define U8-0 0)     ; Smallest U8
+(define U8-128 128) ; About middle of possible range
+(define U8-255 255) ; Maximum U8
+
+;; Template for U8
+
+#;
+(define (fn-for-U8 x)
+  (... x))
+
+;; U16 is Integer [0 - 65,535]
+
+;; Minetest's U16 is a 16 bit (2 bytes of 8 bits each), unsigned integer,
+;; derived by reading two bytes.
+;; We don't alter Racket's representation of Integers here.
+
+(define U16-0 0) ;; lowest U16
+(define U16-255 255) ;; The first byte is 0, and the second is 255
+(define U16-256 256) ;; The first byte is 1, and the second byte is 0
+(define U16-MAX (+ (* 256 255) 255)) ;; Every byte is 255
+
+;; Template for U16
+#;
+(define (fn-for-U16 x)
+  (... x))
+
+;; U32 is Integer [0 - 4,294,967,295]
+;; Minetest's U32 is a 32 bit (4 bytes, 8 bits each) unsigned integer, derived
+;; from reading 4 bytes.
+;; We don't alter Racket's representation of Integers here, either.
+
+(define U32-0 0) ;; lowest U32
+(define U32-1 (+ (* 256 256 256 1) (* 256 256 1) (* 256 1) 1)) ;; Every byte is 1
+(define U32-MAX (+ (* 256 256 256 255) (* 256 256 255) (* 256 255) 255)) ;; Every byte is 255
+
+;; Functions
+
+;; InputStream -> U16
+
+;; Reads 2 bytes (16 bits total) from the provided input stream, converting them
+;; to the appropriate integer.
+
+(check-expect (read-U16 (open-input-bytes (bytes 0 0))) 0)
+(check-expect (read-U16 (open-input-bytes (bytes 0 1))) 1)
+(check-expect (read-U16 (open-input-bytes (bytes 0 255))) 255)
+(check-expect (read-U16 (open-input-bytes (bytes 1 0))) 256)
+(check-expect (read-U16 (open-input-bytes (bytes 255 255))) 65535)
+
+(define (read-U16 stream)
+  (+ (* 256 (read-byte stream)) (read-byte stream)))
+
+
+;; InputStream -> U32
+
+;; Read 4 bytes (32 bits total) from the provided input stream, converting them
+;; to the appropriate integer.
+
+(check-expect (read-U32 (open-input-bytes (bytes 0 0 0 0))) 0)
+(check-expect (read-U32 (open-input-bytes (bytes 1 1 1 1))) (+ (* 256 256 256 1) (* 256 256 1) (* 256 1) 1))
+(check-expect (read-U32 (open-input-bytes (bytes 255 255 255 255))) 4294967295)
+
+(define (read-U32 stream)
+  (+ (* 256 256 256 (read-byte stream)) (* 256 256 (read-byte stream)) (* 256 (read-byte stream)) (read-byte stream)))
+
+(test)
